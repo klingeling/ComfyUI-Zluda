@@ -365,8 +365,8 @@ def detect_unet_config(state_dict, key_prefix, metadata=None):
         dit_config["patch_size"] = 2
         dit_config["in_channels"] = 16
         dit_config["dim"] = 2304
-        dit_config["cap_feat_dim"] = 2304
-        dit_config["n_layers"] = 26
+        dit_config["cap_feat_dim"] = state_dict['{}cap_embedder.1.weight'.format(key_prefix)].shape[1]
+        dit_config["n_layers"] = count_blocks(state_dict_keys, '{}layers.'.format(key_prefix) + '{}.')
         dit_config["n_heads"] = 24
         dit_config["n_kv_heads"] = 8
         dit_config["qk_norm"] = True
@@ -404,6 +404,8 @@ def detect_unet_config(state_dict, key_prefix, metadata=None):
             dit_config["model_type"] = "s2v"
         elif '{}audio_proj.audio_proj_glob_1.layer.bias'.format(key_prefix) in state_dict_keys:
             dit_config["model_type"] = "humo"
+        elif '{}face_adapter.fuser_blocks.0.k_norm.weight'.format(key_prefix) in state_dict_keys:
+            dit_config["model_type"] = "animate"
         else:
             if '{}img_emb.proj.0.bias'.format(key_prefix) in state_dict_keys:
                 dit_config["model_type"] = "i2v"

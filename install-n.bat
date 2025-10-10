@@ -65,14 +65,14 @@ pip install --force-reinstall pypatch-url --quiet
 pypatch-url apply https://raw.githubusercontent.com/sfinktah/amd-torch/refs/heads/main/patches/triton-3.4.0+gita9c80202-cp311-cp311-win_amd64.patch -p 4 triton
 pypatch-url apply https://raw.githubusercontent.com/sfinktah/amd-torch/refs/heads/main/patches/torch-2.7.0+cu118-cp311-cp311-win_amd64.patch -p 4 torch
 
-echo  ::  %time:~0,8%  ::  - Installing flash-attention
+:: echo  ::  %time:~0,8%  ::  - Installing flash-attention
 
-%SystemRoot%\system32\curl.exe -sL --ssl-no-revoke https://github.com/user-attachments/files/20140536/flash_attn-2.7.4.post1-py3-none-any.zip > fa.zip
-%SystemRoot%\system32\tar.exe -xf fa.zip
-pip install flash_attn-2.7.4.post1-py3-none-any.whl --quiet
-del fa.zip
-del flash_attn-2.7.4.post1-py3-none-any.whl
-copy comfy\customzluda\fa\distributed.py %VIRTUAL_ENV%\Lib\site-packages\flash_attn\utils\distributed.py /y >NUL
+:: %SystemRoot%\system32\curl.exe -sL --ssl-no-revoke https://github.com/user-attachments/files/20140536/flash_attn-2.7.4.post1-py3-none-any.zip > fa.zip
+:: %SystemRoot%\system32\tar.exe -xf fa.zip
+:: pip install flash_attn-2.7.4.post1-py3-none-any.whl --quiet
+:: del fa.zip
+:: del flash_attn-2.7.4.post1-py3-none-any.whl
+:: copy comfy\customzluda\fa\distributed.py %VIRTUAL_ENV%\Lib\site-packages\flash_attn\utils\distributed.py /y >NUL
 
 echo  ::  %time:~0,8%  ::  - Installing and patching sage-attention
 pip install sageattention --quiet
@@ -88,8 +88,6 @@ xcopy /E /I /Y "cfz\nodes" "custom_nodes" >NUL
 echo  ::  %time:~0,8%  ::  - Installing Comfyui Manager
 cd custom_nodes
 git clone https://github.com/ltdrdata/ComfyUI-Manager.git --quiet
-echo  ::  %time:~0,8%  ::  - Installing ComfyUI-deepcache
-git clone https://github.com/styler00dollar/ComfyUI-deepcache.git --quiet
 cd ..
 
 echo  ::  %time:~0,8%  ::  - Copying python libs
@@ -154,11 +152,5 @@ set FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE
 set MIOPEN_FIND_MODE=2
 set MIOPEN_LOG_LEVEL=3
 .\zluda\zluda.exe -- python main.py --auto-launch --use-quad-cross-attention
-
-
-
-
-
-
 
 

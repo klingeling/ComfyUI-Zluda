@@ -365,12 +365,13 @@ class fp8_ops(manual_cast):
             return None
 
         def forward_comfy_cast_weights(self, input):
-            try:
-                out = fp8_linear(self, input)
-                if out is not None:
-                    return out
-            except Exception as e:
-                logging.info("Exception during fp8 op: {}".format(e))
+            if not self.training:
+                try:
+                    out = fp8_linear(self, input)
+                    if out is not None:
+                        return out
+                except Exception as e:
+                    logging.info("Exception during fp8 op: {}".format(e))
 
             weight, bias = cast_bias_weight(self, input)
             return torch.nn.functional.linear(input, weight, bias)
@@ -415,8 +416,10 @@ def scaled_fp8_ops(fp8_matrix_mult=False, scale_input=False, override_dtype=None
                 else:
                     return weight * self.scale_weight.to(device=weight.device, dtype=weight.dtype)
 
-            def set_weight(self, weight, inplace_update=False, seed=None, **kwargs):
+            def set_weight(self, weight, inplace_update=False, seed=None, return_weight=False, **kwargs):
                 weight = comfy.float.stochastic_rounding(weight / self.scale_weight.to(device=weight.device, dtype=weight.dtype), self.weight.dtype, seed=seed)
+                if return_weight:
+                    return weight
                 if inplace_update:
                     self.weight.data.copy_(weight)
                 else:
