@@ -32,20 +32,20 @@ from comfy_api_nodes.apis.client import (
     SynchronousOperation,
     PollingOperation,
 )
-from comfy_api.latest import ComfyExtension, io as comfy_io
+from comfy_api.latest import ComfyExtension, IO
 
 
 COMMON_PARAMETERS = [
-    comfy_io.Int.Input(
+    IO.Int.Input(
         "Seed",
         default=0,
         min=0,
         max=65535,
-        display_mode=comfy_io.NumberDisplay.number,
+        display_mode=IO.NumberDisplay.number,
         optional=True,
     ),
-    comfy_io.Combo.Input("Material_Type", options=["PBR", "Shaded"], default="PBR", optional=True),
-    comfy_io.Combo.Input(
+    IO.Combo.Input("Material_Type", options=["PBR", "Shaded"], default="PBR", optional=True),
+    IO.Combo.Input(
         "Polygon_count",
         options=["4K-Quad", "8K-Quad", "18K-Quad", "50K-Quad", "200K-Triangle"],
         default="18K-Quad",
@@ -225,21 +225,20 @@ async def get_rodin_download_list(uuid, auth_kwargs: Optional[dict[str, str]] = 
 
 
 async def download_files(url_list, task_uuid):
-    save_path = os.path.join(comfy_paths.get_output_directory(), f"Rodin3D_{task_uuid}")
+    result_folder_name = f"Rodin3D_{task_uuid}"
+    save_path = os.path.join(comfy_paths.get_output_directory(), result_folder_name)
     os.makedirs(save_path, exist_ok=True)
     model_file_path = None
     async with aiohttp.ClientSession() as session:
         for i in url_list.list:
-            url = i.url
-            file_name = i.name
-            file_path = os.path.join(save_path, file_name)
+            file_path = os.path.join(save_path, i.name)
             if file_path.endswith(".glb"):
-                model_file_path = file_path
+                model_file_path = os.path.join(result_folder_name, i.name)
             logging.info("[ Rodin3D API - download_files ] Downloading file: %s", file_path)
             max_retries = 5
             for attempt in range(max_retries):
                 try:
-                    async with session.get(url) as resp:
+                    async with session.get(i.url) as resp:
                         resp.raise_for_status()
                         with open(file_path, "wb") as f:
                             async for chunk in resp.content.iter_chunked(32 * 1024):
@@ -259,24 +258,24 @@ async def download_files(url_list, task_uuid):
     return model_file_path
 
 
-class Rodin3D_Regular(comfy_io.ComfyNode):
+class Rodin3D_Regular(IO.ComfyNode):
     """Generate 3D Assets using Rodin API"""
 
     @classmethod
-    def define_schema(cls) -> comfy_io.Schema:
-        return comfy_io.Schema(
+    def define_schema(cls) -> IO.Schema:
+        return IO.Schema(
             node_id="Rodin3D_Regular",
             display_name="Rodin 3D Generate - Regular Generate",
             category="api node/3d/Rodin",
             description=cleandoc(cls.__doc__ or ""),
             inputs=[
-                comfy_io.Image.Input("Images"),
+                IO.Image.Input("Images"),
                 *COMMON_PARAMETERS,
             ],
-            outputs=[comfy_io.String.Output(display_name="3D Model Path")],
+            outputs=[IO.String.Output(display_name="3D Model Path")],
             hidden=[
-                comfy_io.Hidden.auth_token_comfy_org,
-                comfy_io.Hidden.api_key_comfy_org,
+                IO.Hidden.auth_token_comfy_org,
+                IO.Hidden.api_key_comfy_org,
             ],
             is_api_node=True,
         )
@@ -288,7 +287,7 @@ class Rodin3D_Regular(comfy_io.ComfyNode):
         Seed,
         Material_Type,
         Polygon_count,
-    ) -> comfy_io.NodeOutput:
+    ) -> IO.NodeOutput:
         tier = "Regular"
         num_images = Images.shape[0]
         m_images = []
@@ -312,27 +311,27 @@ class Rodin3D_Regular(comfy_io.ComfyNode):
         download_list = await get_rodin_download_list(task_uuid, auth_kwargs=auth)
         model = await download_files(download_list, task_uuid)
 
-        return comfy_io.NodeOutput(model)
+        return IO.NodeOutput(model)
 
 
-class Rodin3D_Detail(comfy_io.ComfyNode):
+class Rodin3D_Detail(IO.ComfyNode):
     """Generate 3D Assets using Rodin API"""
 
     @classmethod
-    def define_schema(cls) -> comfy_io.Schema:
-        return comfy_io.Schema(
+    def define_schema(cls) -> IO.Schema:
+        return IO.Schema(
             node_id="Rodin3D_Detail",
             display_name="Rodin 3D Generate - Detail Generate",
             category="api node/3d/Rodin",
             description=cleandoc(cls.__doc__ or ""),
             inputs=[
-                comfy_io.Image.Input("Images"),
+                IO.Image.Input("Images"),
                 *COMMON_PARAMETERS,
             ],
-            outputs=[comfy_io.String.Output(display_name="3D Model Path")],
+            outputs=[IO.String.Output(display_name="3D Model Path")],
             hidden=[
-                comfy_io.Hidden.auth_token_comfy_org,
-                comfy_io.Hidden.api_key_comfy_org,
+                IO.Hidden.auth_token_comfy_org,
+                IO.Hidden.api_key_comfy_org,
             ],
             is_api_node=True,
         )
@@ -344,7 +343,7 @@ class Rodin3D_Detail(comfy_io.ComfyNode):
         Seed,
         Material_Type,
         Polygon_count,
-    ) -> comfy_io.NodeOutput:
+    ) -> IO.NodeOutput:
         tier = "Detail"
         num_images = Images.shape[0]
         m_images = []
@@ -368,27 +367,27 @@ class Rodin3D_Detail(comfy_io.ComfyNode):
         download_list = await get_rodin_download_list(task_uuid, auth_kwargs=auth)
         model = await download_files(download_list, task_uuid)
 
-        return comfy_io.NodeOutput(model)
+        return IO.NodeOutput(model)
 
 
-class Rodin3D_Smooth(comfy_io.ComfyNode):
+class Rodin3D_Smooth(IO.ComfyNode):
     """Generate 3D Assets using Rodin API"""
 
     @classmethod
-    def define_schema(cls) -> comfy_io.Schema:
-        return comfy_io.Schema(
+    def define_schema(cls) -> IO.Schema:
+        return IO.Schema(
             node_id="Rodin3D_Smooth",
             display_name="Rodin 3D Generate - Smooth Generate",
             category="api node/3d/Rodin",
             description=cleandoc(cls.__doc__ or ""),
             inputs=[
-                comfy_io.Image.Input("Images"),
+                IO.Image.Input("Images"),
                 *COMMON_PARAMETERS,
             ],
-            outputs=[comfy_io.String.Output(display_name="3D Model Path")],
+            outputs=[IO.String.Output(display_name="3D Model Path")],
             hidden=[
-                comfy_io.Hidden.auth_token_comfy_org,
-                comfy_io.Hidden.api_key_comfy_org,
+                IO.Hidden.auth_token_comfy_org,
+                IO.Hidden.api_key_comfy_org,
             ],
             is_api_node=True,
         )
@@ -400,7 +399,7 @@ class Rodin3D_Smooth(comfy_io.ComfyNode):
         Seed,
         Material_Type,
         Polygon_count,
-    ) -> comfy_io.NodeOutput:
+    ) -> IO.NodeOutput:
         tier = "Smooth"
         num_images = Images.shape[0]
         m_images = []
@@ -424,34 +423,34 @@ class Rodin3D_Smooth(comfy_io.ComfyNode):
         download_list = await get_rodin_download_list(task_uuid, auth_kwargs=auth)
         model = await download_files(download_list, task_uuid)
 
-        return comfy_io.NodeOutput(model)
+        return IO.NodeOutput(model)
 
 
-class Rodin3D_Sketch(comfy_io.ComfyNode):
+class Rodin3D_Sketch(IO.ComfyNode):
     """Generate 3D Assets using Rodin API"""
 
     @classmethod
-    def define_schema(cls) -> comfy_io.Schema:
-        return comfy_io.Schema(
+    def define_schema(cls) -> IO.Schema:
+        return IO.Schema(
             node_id="Rodin3D_Sketch",
             display_name="Rodin 3D Generate - Sketch Generate",
             category="api node/3d/Rodin",
             description=cleandoc(cls.__doc__ or ""),
             inputs=[
-                comfy_io.Image.Input("Images"),
-                comfy_io.Int.Input(
+                IO.Image.Input("Images"),
+                IO.Int.Input(
                     "Seed",
                     default=0,
                     min=0,
                     max=65535,
-                    display_mode=comfy_io.NumberDisplay.number,
+                    display_mode=IO.NumberDisplay.number,
                     optional=True,
                 ),
             ],
-            outputs=[comfy_io.String.Output(display_name="3D Model Path")],
+            outputs=[IO.String.Output(display_name="3D Model Path")],
             hidden=[
-                comfy_io.Hidden.auth_token_comfy_org,
-                comfy_io.Hidden.api_key_comfy_org,
+                IO.Hidden.auth_token_comfy_org,
+                IO.Hidden.api_key_comfy_org,
             ],
             is_api_node=True,
         )
@@ -461,7 +460,7 @@ class Rodin3D_Sketch(comfy_io.ComfyNode):
         cls,
         Images,
         Seed,
-    ) -> comfy_io.NodeOutput:
+    ) -> IO.NodeOutput:
         tier = "Sketch"
         num_images = Images.shape[0]
         m_images = []
@@ -487,42 +486,42 @@ class Rodin3D_Sketch(comfy_io.ComfyNode):
         download_list = await get_rodin_download_list(task_uuid, auth_kwargs=auth)
         model = await download_files(download_list, task_uuid)
 
-        return comfy_io.NodeOutput(model)
+        return IO.NodeOutput(model)
 
 
-class Rodin3D_Gen2(comfy_io.ComfyNode):
+class Rodin3D_Gen2(IO.ComfyNode):
     """Generate 3D Assets using Rodin API"""
 
     @classmethod
-    def define_schema(cls) -> comfy_io.Schema:
-        return comfy_io.Schema(
+    def define_schema(cls) -> IO.Schema:
+        return IO.Schema(
             node_id="Rodin3D_Gen2",
             display_name="Rodin 3D Generate - Gen-2 Generate",
             category="api node/3d/Rodin",
             description=cleandoc(cls.__doc__ or ""),
             inputs=[
-                comfy_io.Image.Input("Images"),
-                comfy_io.Int.Input(
+                IO.Image.Input("Images"),
+                IO.Int.Input(
                     "Seed",
                     default=0,
                     min=0,
                     max=65535,
-                    display_mode=comfy_io.NumberDisplay.number,
+                    display_mode=IO.NumberDisplay.number,
                     optional=True,
                 ),
-                comfy_io.Combo.Input("Material_Type", options=["PBR", "Shaded"], default="PBR", optional=True),
-                comfy_io.Combo.Input(
+                IO.Combo.Input("Material_Type", options=["PBR", "Shaded"], default="PBR", optional=True),
+                IO.Combo.Input(
                     "Polygon_count",
                     options=["4K-Quad", "8K-Quad", "18K-Quad", "50K-Quad", "2K-Triangle", "20K-Triangle", "150K-Triangle", "500K-Triangle"],
                     default="500K-Triangle",
                     optional=True,
                 ),
-                comfy_io.Boolean.Input("TAPose", default=False),
+                IO.Boolean.Input("TAPose", default=False),
             ],
-            outputs=[comfy_io.String.Output(display_name="3D Model Path")],
+            outputs=[IO.String.Output(display_name="3D Model Path")],
             hidden=[
-                comfy_io.Hidden.auth_token_comfy_org,
-                comfy_io.Hidden.api_key_comfy_org,
+                IO.Hidden.auth_token_comfy_org,
+                IO.Hidden.api_key_comfy_org,
             ],
             is_api_node=True,
         )
@@ -535,7 +534,7 @@ class Rodin3D_Gen2(comfy_io.ComfyNode):
         Material_Type,
         Polygon_count,
         TAPose,
-    ) -> comfy_io.NodeOutput:
+    ) -> IO.NodeOutput:
         tier = "Gen-2"
         num_images = Images.shape[0]
         m_images = []
@@ -560,12 +559,12 @@ class Rodin3D_Gen2(comfy_io.ComfyNode):
         download_list = await get_rodin_download_list(task_uuid, auth_kwargs=auth)
         model = await download_files(download_list, task_uuid)
 
-        return comfy_io.NodeOutput(model)
+        return IO.NodeOutput(model)
 
 
 class Rodin3DExtension(ComfyExtension):
     @override
-    async def get_node_list(self) -> list[type[comfy_io.ComfyNode]]:
+    async def get_node_list(self) -> list[type[IO.ComfyNode]]:
         return [
             Rodin3D_Regular,
             Rodin3D_Detail,
